@@ -1,12 +1,30 @@
 import { GoogleGenAI } from "@google/genai";
+import { EMBEDDING_MODEL, GEMINI_API_KEY } from "../config.js";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+let client;
+
+/**
+ * Builds the Gemini client on first use.
+ *
+ * Creating it at module scope would read GEMINI_API_KEY at import time, which
+ * silently produces a keyless client if this module happens to be evaluated
+ * before .env is loaded.
+ */
+function getClient() {
+  if (!client) {
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not set -- copy .env.example to .env");
+    }
+
+    client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  }
+
+  return client;
+}
 
 export async function createEmbedding(text) {
-  const response = await ai.models.embedContent({
-    model: "gemini-embedding-001",
+  const response = await getClient().models.embedContent({
+    model: EMBEDDING_MODEL,
     contents: text,
   });
 
